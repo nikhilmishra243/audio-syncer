@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Audio Streamer</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg: #0a0e27;
+            --card-bg: rgba(15, 23, 42, 0.8);
+            --accent: #3b82f6;
+            --accent-hover: #2563eb;
+            --success: #10b981;
+            --text: #e2e8f0;
+            --text-dim: #94a3b8;
+            --border: rgba(148, 163, 184, 0.1);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Animated background */
+        .bg-gradient {
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(circle at 20% 50%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 80%, rgba(168, 85, 247, 0.1) 0%, transparent 50%);
+            animation: pulse 8s ease-in-out infinite;
+            z-index: 0;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 0.8; }
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 900px;
+            width: 100%;
+        }
+
+        .card {
+            background: var(--card-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 48px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .logo {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 20px;
+            background: linear-gradient(135deg, var(--accent), #8b5cf6);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 10px 30px rgba(59, 130, 246, 0.3);
+        }
+
+        .logo svg {
+            width: 48px;
+            height: 48px;
+            fill: white;
+        }
+
+        h1 {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            font-size: 16px;
+            color: var(--text-dim);
+        }
+
+        .status {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 32px;
+            padding: 16px;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            border-radius: 12px;
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            background: var(--success);
+            border-radius: 50%;
+            animation: blink 2s ease-in-out infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        .status-text {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--success);
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .info-item {
+            background: rgba(59, 130, 246, 0.05);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .info-label {
+            font-size: 13px;
+            color: var(--text-dim);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .info-value {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .url-box {
+            background: rgba(59, 130, 246, 0.05);
+            border: 2px solid var(--accent);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 24px;
+            text-align: center;
+        }
+
+        .url-label {
+            font-size: 13px;
+            color: var(--text-dim);
+            margin-bottom: 12px;
+        }
+
+        .url-text {
+            font-family: 'Courier New', monospace;
+            font-size: 18px;
+            color: var(--accent);
+            font-weight: 600;
+            word-break: break-all;
+        }
+
+        .actions {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            flex: 1;
+            min-width: 200px;
+            padding: 18px 32px;
+            font-size: 16px;
+            font-weight: 600;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent), #8b5cf6);
+            color: white;
+            box-shadow: 0 4px 20px rgba(59, 130, 246, 0.4);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 30px rgba(59, 130, 246, 0.6);
+        }
+
+        .btn-secondary {
+            background: rgba(59, 130, 246, 0.1);
+            color: var(--accent);
+            border: 2px solid var(--accent);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(59, 130, 246, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .btn svg {
+            width: 20px;
+            height: 20px;
+            fill: currentColor;
+        }
+
+        .instructions {
+            margin-top: 32px;
+            padding: 24px;
+            background: rgba(59, 130, 246, 0.05);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+        }
+
+        .instructions h3 {
+            font-size: 16px;
+            margin-bottom: 16px;
+            color: var(--text);
+        }
+
+        .instructions ol {
+            padding-left: 20px;
+            line-height: 1.8;
+        }
+
+        .instructions li {
+            color: var(--text-dim);
+            margin-bottom: 8px;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 32px;
+            padding-top: 24px;
+            border-top: 1px solid var(--border);
+            color: var(--text-dim);
+            font-size: 14px;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(59, 130, 246, 0.3);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .card { padding: 32px 24px; }
+            h1 { font-size: 24px; }
+            .btn { min-width: 100%; }
+            .info-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+<div class="bg-gradient"></div>
+
+<div class="container">
+    <div class="card">
+        <div class="header">
+            <div class="logo">
+                <svg viewBox="0 0 24 24">
+                    <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+                </svg>
+            </div>
+            <h1>System Audio Streamer</h1>
+            <p class="subtitle">Cross-platform low-latency audio streaming</p>
+        </div>
+
+        <div class="status">
+            <div class="status-dot"></div>
+            <span class="status-text" id="statusText">
+                    <span class="loading"></span> Loading...
+                </span>
+        </div>
+
+        <div class="info-grid" id="infoGrid">
+            <!-- Info will be populated by JavaScript -->
+        </div>
+
+        <div class="url-box" id="urlBox" style="display: none;">
+            <div class="url-label">🎵 Streaming URL</div>
+            <div class="url-text" id="streamUrl">Loading...</div>
+        </div>
+
+        <div class="actions">
+            <a href="/stream" class="btn btn-primary">
+                <svg viewBox="0 0 24 24">
+                    <path d="M8 5v14l11-7z"/>
+                </svg>
+                Open Stream Player
+            </a>
+            <button class="btn btn-secondary" onclick="copyUrl()">
+                <svg viewBox="0 0 24 24">
+                    <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
+                </svg>
+                Copy URL
+            </button>
+        </div>
+
+        <div class="instructions">
+            <h3>📱 How to Use:</h3>
+            <ol>
+                <li><strong>Click "Open Stream Player"</strong> to start listening on this device</li>
+                <li><strong>Copy the streaming URL</strong> to open on other devices (phone, tablet, etc.)</li>
+                <li><strong>Play music</strong> on this computer - it will stream to all connected devices</li>
+                <li>Enjoy <strong>low-latency streaming</strong> (~100-200ms delay)</li>
+            </ol>
+        </div>
+
+        <div class="footer">
+            <div id="platformInfo">Platform: Loading...</div>
+            <div style="margin-top: 8px;">Latency: ~100-200ms | Sample Rate: 44.1kHz</div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let serverInfo = null;
+
+    async function loadServerInfo() {
+        try {
+            const response = await fetch('/api/info');
+            serverInfo = await response.json();
+
+            // Update status
+            document.getElementById('statusText').innerHTML =
+                `Server Online • ${serverInfo.connected_clients} client${serverInfo.connected_clients !== 1 ? 's' : ''} connected`;
+
+            // Update info grid
+            document.getElementById('infoGrid').innerHTML = `
+                <div class="info-item">
+                    <div class="info-label">Platform</div>
+                    <div class="info-value">${serverInfo.platform}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Connected Clients</div>
+                    <div class="info-value">${serverInfo.connected_clients}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Audio Quality</div>
+                    <div class="info-value">${serverInfo.sample_rate / 1000}kHz</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Latency</div>
+                    <div class="info-value">${serverInfo.latency}</div>
+                </div>
+            `;
+
+            // Update URL box
+            document.getElementById('streamUrl').textContent = serverInfo.stream_url;
+            document.getElementById('urlBox').style.display = 'block';
+
+            // Update platform info
+            document.getElementById('platformInfo').textContent =
+                `Platform: ${serverInfo.platform} | Host: ${serverInfo.host}:${serverInfo.http_port}`;
+
+        } catch (error) {
+            document.getElementById('statusText').innerHTML =
+                '<span style="color: #ef4444;">⚠️ Error loading server info</span>';
+            console.error('Error loading server info:', error);
+        }
+    }
+
+    function copyUrl() {
+        const url = document.getElementById('streamUrl').textContent;
+        navigator.clipboard.writeText(url).then(() => {
+            const btn = event.target.closest('.btn-secondary');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = `
+                <svg viewBox="0 0 24 24" style="width: 20px; height: 20px; fill: currentColor;">
+                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                </svg>
+                Copied!
+            `;
+            setTimeout(() => {
+                btn.innerHTML = originalText;
+            }, 2000);
+        }).catch(err => {
+            alert('Failed to copy URL');
+        });
+    }
+
+    // Load server info on page load
+    loadServerInfo();
+
+    // Refresh every 3 seconds to update client count
+    setInterval(loadServerInfo, 3000);
+</script>
+</body>
+</html>

@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audio Stream - Connect & Listen</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg: #0a0e27;
+            --card-bg: rgba(15, 23, 42, 0.9);
+            --accent: #3b82f6;
+            --success: #10b981;
+            --danger: #ef4444;
+            --text: #e2e8f0;
+            --text-dim: #94a3b8;
+            --border: rgba(148, 163, 184, 0.1);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .bg-gradient {
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(circle at 30% 50%, rgba(59, 130, 246, 0.15) 0%, transparent 50%),
+                        radial-gradient(circle at 70% 80%, rgba(139, 92, 246, 0.12) 0%, transparent 50%);
+            animation: pulse 8s ease-in-out infinite;
+            z-index: 0;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 0.8; }
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 600px;
+            width: 100%;
+        }
+
+        .card {
+            background: var(--card-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 48px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+            animation: fadeIn 0.6s ease-out;
+            text-align: center;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .logo {
+            width: 100px;
+            height: 100px;
+            margin: 0 auto 32px;
+            background: linear-gradient(135deg, var(--accent), #8b5cf6);
+            border-radius: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 10px 30px rgba(59, 130, 246, 0.4);
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .logo svg {
+            width: 56px;
+            height: 56px;
+            fill: white;
+        }
+
+        h1 {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            font-size: 16px;
+            color: var(--text-dim);
+            margin-bottom: 40px;
+            line-height: 1.6;
+        }
+
+        .status-card {
+            padding: 24px;
+            border-radius: 16px;
+            margin-bottom: 32px;
+            border: 2px solid;
+            transition: all 0.3s ease;
+        }
+
+        .status-card.online {
+            background: rgba(16, 185, 129, 0.1);
+            border-color: rgba(16, 185, 129, 0.3);
+        }
+
+        .status-card.offline {
+            background: rgba(239, 68, 68, 0.1);
+            border-color: rgba(239, 68, 68, 0.3);
+        }
+
+        .status-header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .status-dot {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--danger);
+        }
+
+        .status-dot.online {
+            background: var(--success);
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.6);
+            animation: blink 2s ease-in-out infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        .status-title {
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .status-title.online { color: var(--success); }
+        .status-title.offline { color: var(--danger); }
+
+        .status-message {
+            font-size: 14px;
+            color: var(--text-dim);
+        }
+
+        .stream-btn {
+            width: 100%;
+            padding: 20px 32px;
+            font-size: 18px;
+            font-weight: 600;
+            border: none;
+            border-radius: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            text-decoration: none;
+            margin-bottom: 24px;
+        }
+
+        .stream-btn.enabled {
+            background: linear-gradient(135deg, var(--accent), #8b5cf6);
+            color: white;
+            box-shadow: 0 4px 20px rgba(59, 130, 246, 0.4);
+        }
+
+        .stream-btn.enabled:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 30px rgba(59, 130, 246, 0.6);
+        }
+
+        .stream-btn.disabled {
+            background: rgba(148, 163, 184, 0.1);
+            color: var(--text-dim);
+            cursor: not-allowed;
+            border: 2px solid var(--border);
+        }
+
+        .stream-btn svg {
+            width: 24px;
+            height: 24px;
+            fill: currentColor;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(59, 130, 246, 0.3);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .features {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            margin-top: 32px;
+        }
+
+        .feature {
+            padding: 16px;
+            background: rgba(59, 130, 246, 0.05);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+        }
+
+        .feature-icon {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+
+        .feature-text {
+            font-size: 13px;
+            color: var(--text-dim);
+        }
+
+        @media (max-width: 600px) {
+            .card { padding: 32px 24px; }
+            h1 { font-size: 24px; }
+            .features { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+<div class="bg-gradient"></div>
+
+<div class="container">
+    <div class="card">
+        <div class="logo">
+            <svg viewBox="0 0 24 24">
+                <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+            </svg>
+        </div>
+
+        <h1>Audio Stream</h1>
+        <p class="subtitle">Connect and listen to high-quality audio streaming with ultra-low latency</p>
+
+        <div id="statusCard" class="status-card offline">
+            <div class="status-header">
+                <div id="statusDot" class="status-dot"></div>
+                <div id="statusTitle" class="status-title offline">Checking Status...</div>
+            </div>
+            <div id="statusMessage" class="status-message">
+                <span class="spinner"></span> Connecting to server...
+            </div>
+        </div>
+
+        <a href="#" id="streamBtn" class="stream-btn disabled" onclick="return handleStreamClick()">
+            <svg viewBox="0 0 24 24">
+                <path d="M8 5v14l11-7z"/>
+            </svg>
+            <span id="btnText">Waiting for Server...</span>
+        </a>
+
+        <div class="features">
+            <div class="feature">
+                <div class="feature-icon">🎵</div>
+                <div class="feature-text">High Quality Audio</div>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">⚡</div>
+                <div class="feature-text">Low Latency (~100-200ms)</div>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">📱</div>
+                <div class="feature-text">Multi-Device Support</div>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">🔒</div>
+                <div class="feature-text">Secure Connection</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let serverOnline = false;
+    let streamUrl = '';
+
+    async function checkServerStatus() {
+        try {
+            const response = await fetch('/api/user/status');
+            const data = await response.json();
+
+            serverOnline = data.online;
+            streamUrl = data.stream_url || '';
+
+            const statusCard = document.getElementById('statusCard');
+            const statusDot = document.getElementById('statusDot');
+            const statusTitle = document.getElementById('statusTitle');
+            const statusMessage = document.getElementById('statusMessage');
+            const streamBtn = document.getElementById('streamBtn');
+            const btnText = document.getElementById('btnText');
+
+            if (data.online) {
+                // Server is online
+                statusCard.className = 'status-card online';
+                statusDot.className = 'status-dot online';
+                statusTitle.className = 'status-title online';
+                statusTitle.textContent = 'Server Online';
+                statusMessage.textContent = data.message;
+
+                streamBtn.className = 'stream-btn enabled';
+                streamBtn.href = streamUrl;
+                btnText.textContent = 'Start Streaming';
+            } else {
+                // Server is offline
+                statusCard.className = 'status-card offline';
+                statusDot.className = 'status-dot';
+                statusTitle.className = 'status-title offline';
+                statusTitle.textContent = 'Server Offline';
+                statusMessage.textContent = data.message;
+
+                streamBtn.className = 'stream-btn disabled';
+                streamBtn.href = '#';
+                btnText.textContent = 'Server Unavailable';
+            }
+        } catch (error) {
+            console.error('Failed to check status:', error);
+
+            const statusCard = document.getElementById('statusCard');
+            const statusDot = document.getElementById('statusDot');
+            const statusTitle = document.getElementById('statusTitle');
+            const statusMessage = document.getElementById('statusMessage');
+            const streamBtn = document.getElementById('streamBtn');
+            const btnText = document.getElementById('btnText');
+
+            statusCard.className = 'status-card offline';
+            statusDot.className = 'status-dot';
+            statusTitle.className = 'status-title offline';
+            statusTitle.textContent = 'Connection Error';
+            statusMessage.textContent = 'Unable to reach server. Please try again.';
+
+            streamBtn.className = 'stream-btn disabled';
+            streamBtn.href = '#';
+            btnText.textContent = 'Connection Failed';
+        }
+    }
+
+    function handleStreamClick() {
+        if (!serverOnline) {
+            alert('Server is currently offline. Please wait for the admin to start the server.');
+            return false;
+        }
+        // Allow the default link behavior (navigate to streamUrl)
+        return true;
+    }
+
+    // Initial check
+    checkServerStatus();
+
+    // Auto-refresh every 3 seconds
+    setInterval(checkServerStatus, 3000);
+</script>
+</body>
+</html>
