@@ -13,15 +13,17 @@ def load_config():
     """Load audio configuration"""
     try:
         # Try device_config.json first
-        if os.path.exists('device_config.json'):
-            with open('device_config.json', 'r') as f:
+        config_path = os.path.join('..', '..', 'config', 'device_config.json')
+        if os.path.exists(config_path):
+            with open(config_path, 'r') as f:
                 config = json.load(f)
                 config['source'] = 'device_config'
                 return config
 
         # Fallback to audio_config.json
-        if os.path.exists('audio_config.json'):
-            with open('audio_config.json', 'r') as f:
+        config_path = os.path.join('..', '..', 'config', 'audio_config.json')
+        if os.path.exists(config_path):
+            with open(config_path, 'r') as f:
                 config = json.load(f)
                 config['source'] = 'audio_config'
                 return config
@@ -102,7 +104,7 @@ def test_audio_levels(device, duration=5):
     except Exception as e:
         print(f"\n❌ Error capturing audio: {e}")
         print("\nPossible solutions:")
-        print("1. Run: python3 select_audio_source.py")
+        print("1. Run: python3 find_monitor_device.py")
         print("2. Make sure audio is playing")
         print("3. Check: pactl list short sources | grep monitor")
         return False
@@ -149,7 +151,7 @@ def main():
                 print(f"   Monitor: {device}")
 
     if not device:
-        print("\n⚠️  No configuration found!")
+        print("\n⚠️ No configuration found!")
         print("   Trying to auto-detect...\n")
 
         # Try to find pulse device

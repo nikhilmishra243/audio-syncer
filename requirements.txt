@@ -1,7 +1,11 @@
+# Audio Streaming Control Panel - Python Dependencies
+
+# Core dependencies
 sounddevice>=0.4.6
 Flask>=2.3.0
 websockets>=11.0
 numpy>=1.24.0
+psutil>=5.9.0
 
 # Platform-specific notes:
 #
@@ -14,4 +18,5 @@ numpy>=1.24.0
 #   If issues: brew install portaudio
 #
 # Windows: Works out of the box with pip install
-psutil
+#
+# Note: The start.sh / start.bat scripts handle dependency installation automatically

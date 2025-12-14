@@ -8,6 +8,7 @@ import subprocess
 import sounddevice as sd
 import sys
 import json
+import os
 
 def get_pactl_monitors():
     """Get monitor sources from pactl"""
@@ -108,7 +109,7 @@ def find_best_device():
     # Strategy 3: First pulse device
     for inp in sd_inputs:
         if inp['name'].lower() == 'pulse':
-            print(f"⚠️  Found Pulse Device (no RUNNING monitors)")
+            print(f"⚠️ Found Pulse Device (no RUNNING monitors)")
             print(f"   Device ID: {inp['id']}")
             print(f"   Name: {inp['name']}")
             return inp['id'], inp['name'], 'pulse'
@@ -116,7 +117,7 @@ def find_best_device():
     # Strategy 4: Default device
     for inp in sd_inputs:
         if inp['name'].lower() == 'default':
-            print(f"⚠️  Using Default Device")
+            print(f"⚠️ Using Default Device")
             print(f"   Device ID: {inp['id']}")
             print(f"   Name: {inp['name']}")
             return inp['id'], inp['name'], 'default'
@@ -124,7 +125,7 @@ def find_best_device():
     # Strategy 5: First device with 2+ channels
     if sd_inputs:
         inp = sd_inputs[0]
-        print(f"⚠️  Using First Available Device")
+        print(f"⚠️ Using First Available Device")
         print(f"   Device ID: {inp['id']}")
         print(f"   Name: {inp['name']}")
         return inp['id'], inp['name'], 'first'
@@ -141,10 +142,15 @@ def save_device_config(device_id, device_name, method):
         'note': 'Auto-detected capture device for system audio'
     }
 
-    with open('device_config.json', 'w') as f:
+    # Ensure config directory exists
+    config_dir = os.path.join('..', '..', 'config')
+    os.makedirs(config_dir, exist_ok=True)
+
+    config_path = os.path.join(config_dir, 'device_config.json')
+    with open(config_path, 'w') as f:
         json.dump(config, f, indent=2)
 
-    print(f"\n✅ Configuration saved to device_config.json")
+    print(f"\n✅ Configuration saved to {config_path}")
 
 def set_monitor_as_default():
     """Set monitor source as default input (KEY to capturing system audio!)"""
@@ -158,7 +164,7 @@ def set_monitor_as_default():
         )
 
         if result.returncode != 0:
-            print("⚠️  Could not get default sink")
+            print("⚠️ Could not get default sink")
             return False
 
         default_sink = result.stdout.strip()
@@ -179,11 +185,11 @@ def set_monitor_as_default():
             print(f"   This means 'pulse' device captures SYSTEM AUDIO, not mic")
             return True
         else:
-            print(f"   ⚠️  Could not set monitor as default")
+            print(f"   ⚠️ Could not set monitor as default")
             return False
 
     except Exception as e:
-        print(f"⚠️  Error setting default source: {e}")
+        print(f"⚠️ Error setting default source: {e}")
         return False
 
 def main():
@@ -219,7 +225,7 @@ def main():
         print("1. Test it: python3 test_audio.py")
         print("   • Play music → should show activity")
         print("   • Speak in mic → should NOT show activity")
-        print("2. If test works → python3 server.py")
+        print("2. If test works → ./start.sh")
 
         print("\n💡 To switch back to microphone later:")
         print("   pactl set-default-source <your-mic-name>")

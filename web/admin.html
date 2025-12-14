@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Control Panel - Audio Streamer</title>
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg: #0a0e27;
+            --card-bg: rgba(15, 23, 42, 0.9);
+            --accent: #3b82f6;
+            --success: #10b981;
+            --danger: #ef4444;
+            --text: #e2e8f0;
+            --text-dim: #94a3b8;
+            --border: rgba(148, 163, 184, 0.1);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        /* Background */
+        .bg-gradient {
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(circle at 20% 50%, rgba(59,130,246,.15), transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(239,68,68,.1), transparent 50%);
+            z-index: 0;
+        }
+
+        /* Layout */
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 1000px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 40px 20px;
+            flex: 1;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        h1 {
+            font-size: 36px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            background: linear-gradient(135deg, #3b82f6, #ef4444);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            font-size: 16px;
+            color: var(--text-dim);
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 32px;
+            box-shadow: 0 10px 30px rgba(0,0,0,.3);
+        }
+
+        /* Status */
+        .status-section {
+            display: flex;
+            align-items: center;
+            padding: 24px;
+            border-radius: 16px;
+            background: rgba(59,130,246,.05);
+            margin-bottom: 24px;
+        }
+
+        .status-info {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .status-dot {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--text-dim);
+        }
+
+        .status-dot.online {
+            background: var(--success);
+            box-shadow: 0 0 15px rgba(16,185,129,.6);
+        }
+
+        .status-value {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        /* Buttons */
+        .controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .btn {
+            padding: 18px 28px;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 12px;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-start {
+            background: linear-gradient(135deg, var(--success), #059669);
+            color: white;
+        }
+
+        .btn-stop {
+            background: linear-gradient(135deg, var(--danger), #dc2626);
+            color: white;
+        }
+
+        .spinner {
+            width: 18px;
+            height: 18px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin .8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Messages */
+        .message {
+            display: none;
+            padding: 14px;
+            border-radius: 12px;
+            margin-bottom: 16px;
+        }
+
+        .message.success {
+            background: rgba(16,185,129,.1);
+            color: var(--success);
+        }
+
+        .message.error {
+            background: rgba(239,68,68,.1);
+            color: var(--danger);
+        }
+
+        .info-box {
+            padding: 16px;
+            border-radius: 12px;
+            background: rgba(59,130,246,.05);
+            margin-top: 12px;
+        }
+
+        .info-value {
+            font-family: monospace;
+            color: var(--accent);
+            word-break: break-all;
+        }
+
+        /* Footer */
+        footer {
+            background: var(--card-bg);
+            border-top: 1px solid var(--border);
+            padding: 32px 20px;
+        }
+
+        .footer-content {
+            max-width: 1000px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .developer-title {
+            font-size: 14px;
+            color: var(--text-dim);
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .developer-name {
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .developer-role {
+            font-size: 14px;
+            color: var(--accent);
+            margin-bottom: 20px;
+        }
+
+        /* Social Pills (matches screenshot) */
+        .social-links {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .social-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 18px 10px 12px;
+            border-radius: 999px;
+            background: rgba(15, 23, 42, 0.85);
+            border: 1px solid rgba(59,130,246,.35);
+            color: #60a5fa;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .icon-box {
+            width: 32px;
+            height: 32px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(59,130,246,.15);
+        }
+
+        .icon-box svg {
+            width: 18px;
+            height: 18px;
+            fill: currentColor;
+        }
+
+        .social-pill.linkedin {
+            color: #3b82f6;
+        }
+
+        .social-pill:hover {
+            transform: translateY(-2px);
+            box-shadow:
+                0 0 0 1px rgba(59,130,246,.4),
+                0 10px 30px rgba(59,130,246,.35);
+        }
+
+        .copyright {
+            margin-top: 20px;
+            font-size: 13px;
+            color: var(--text-dim);
+        }
+
+        @media (max-width: 768px) {
+            .controls { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+
+<body>
+<div class="bg-gradient"></div>
+
+<div class="container">
+    <div class="header">
+        <h1>Audio Streaming Control</h1>
+        <p class="subtitle">Admin server management panel</p>
+    </div>
+
+    <div class="card">
+        <div id="messageBox" class="message"></div>
+
+        <div class="status-section">
+            <div class="status-info">
+                <div id="statusDot" class="status-dot"></div>
+                <div id="statusValue" class="status-value">Checking...</div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button id="startBtn" class="btn btn-start" onclick="startServer()">▶ Start Server</button>
+            <button id="stopBtn" class="btn btn-stop" onclick="stopServer()">■ Stop Server</button>
+        </div>
+
+        <div id="urlSection" style="display:none">
+            <div class="info-box">
+                Stream URL:
+                <div id="streamUrl" class="info-value">-</div>
+            </div>
+            <div class="info-box">
+                User Page:
+                <div id="userUrl" class="info-value">-</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<footer>
+    <div class="footer-content">
+        <div class="developer-title">About Developer</div>
+        <div class="developer-name" id="devName">Nikhil Mishra</div>
+        <div class="developer-role" id="devRole">Software Developer</div>
+
+        <div class="social-links">
+            <a href="#" id="githubLink" class="social-pill github" target="_blank">
+                <span class="icon-box">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M12 0c-6.626 0-12 5.373-12 12
+                        0 5.302 3.438 9.8 8.207 11.387
+                        .599.111.793-.261.793-.577v-2.234
+                        c-3.338.726-4.033-1.416-4.033-1.416
+                        -.546-1.387-1.333-1.756-1.333-1.756
+                        -1.089-.745.083-.729.083-.729
+                        1.205.084 1.839 1.237 1.839 1.237
+                        1.07 1.834 2.807 1.304 3.492.997
+                        .107-.775.418-1.305.762-1.604
+                        -2.665-.305-5.467-1.334-5.467-5.931
+                        0-1.311.469-2.381 1.236-3.221
+                        -.124-.303-.535-1.524.117-3.176
+                        0 0 1.008-.322 3.301 1.23
+                        .957-.266 1.983-.399 3.003-.404
+                        1.02.005 2.047.138 3.006.404
+                        2.291-1.552 3.297-1.23 3.297-1.23
+                        .653 1.653.242 2.874.118 3.176
+                        .77.84 1.235 1.911 1.235 3.221
+                        0 4.609-2.807 5.624-5.479 5.921
+                        .43.372.823 1.102.823 2.222v3.293
+                        c0 .319.192.694.801.576
+                        4.765-1.589 8.199-6.086 8.199-11.386
+                        0-6.627-5.373-12-12-12z"/>
+                    </svg>
+                </span>
+                GitHub
+            </a>
+
+            <a href="#" id="linkedinLink" class="social-pill linkedin" target="_blank">
+                <span class="icon-box">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M20.447 20.452h-3.554v-5.569
+                        c0-1.328-.027-3.037-1.852-3.037
+                        -1.853 0-2.136 1.445-2.136 2.939
+                        v5.667H9.351V9h3.414v1.561h.046
+                        c.477-.9 1.637-1.85 3.37-1.85
+                        3.601 0 4.267 2.37 4.267 5.455
+                        v6.286zM5.337 7.433
+                        c-1.144 0-2.063-.926-2.063-2.065
+                        0-1.138.92-2.063 2.063-2.063
+                        1.14 0 2.064.925 2.064 2.063
+                        0 1.139-.925 2.065-2.064 2.065zm
+                        1.782 13.019H3.555V9h3.564v11.452z"/>
+                    </svg>
+                </span>
+                LinkedIn
+            </a>
+        </div>
+
+        <div class="copyright">
+            © 2025 Audio Streaming System • Built with ❤️
+        </div>
+    </div>
+</footer>
+
+<script>
+    async function checkStatus() {
+        try {
+            const res = await fetch('/api/admin/status');
+            const d = await res.json();
+
+            const dot = document.getElementById('statusDot');
+            const val = document.getElementById('statusValue');
+            const start = document.getElementById('startBtn');
+            const stop = document.getElementById('stopBtn');
+            const urlSection = document.getElementById('urlSection');
+
+            start.innerHTML = '▶ Start Server';
+            stop.innerHTML = '■ Stop Server';
+
+            if (d.running) {
+                dot.classList.add('online');
+                val.textContent = 'Server Online';
+                start.disabled = true;
+                stop.disabled = false;
+                streamUrl.textContent = d.stream_url;
+                userUrl.textContent = d.user_page_url;
+                urlSection.style.display = 'block';
+            } else {
+                dot.classList.remove('online');
+                val.textContent = 'Server Offline';
+                start.disabled = false;
+                stop.disabled = true;
+                urlSection.style.display = 'none';
+            }
+        } catch {}
+    }
+
+    async function startServer() {
+        startBtn.disabled = true;
+        startBtn.innerHTML = '<span class="spinner"></span> Starting...';
+        try {
+            const r = await fetch('/api/admin/start', { method: 'POST' });
+            const d = await r.json();
+            showMessage(d.success ? 'success' : 'error', d.message);
+            setTimeout(checkStatus, 1000);
+        } catch {
+            showMessage('error', 'Failed to start server');
+            startBtn.disabled = false;
+        }
+    }
+
+    async function stopServer() {
+        stopBtn.disabled = true;
+        stopBtn.innerHTML = '<span class="spinner"></span> Stopping...';
+        try {
+            const r = await fetch('/api/admin/stop', { method: 'POST' });
+            const d = await r.json();
+            showMessage(d.success ? 'success' : 'error', d.message);
+            setTimeout(checkStatus, 1000);
+        } catch {
+            showMessage('error', 'Failed to stop server');
+            stopBtn.disabled = false;
+        }
+    }
+
+    function showMessage(type, msg) {
+        const box = document.getElementById('messageBox');
+        box.className = `message ${type}`;
+        box.textContent = msg;
+        box.style.display = 'block';
+        setTimeout(() => box.style.display = 'none', 4000);
+    }
+
+    async function loadDeveloperInfo() {
+        try {
+            const r = await fetch('/api/developer');
+            const d = await r.json();
+            devName.textContent = d.name;
+            devRole.textContent = d.role;
+            githubLink.href = d.github;
+            linkedinLink.href = d.linkedin;
+        } catch {}
+    }
+
+    checkStatus();
+    loadDeveloperInfo();
+    setInterval(checkStatus, 3000);
+</script>
+
+</body>
+</html>

@@ -1,11 +1,16 @@
 #!/bin/bash
 # Cross-Platform Audio Streamer Launcher with Auto-Restart
 # Works on Linux and macOS
+# This script runs server.py directly (not via launcher.py)
 
 echo "============================================================"
 echo "    System Audio Streamer - Auto-Restart Enabled"
 echo "============================================================"
 echo ""
+
+# Get script directory and project root
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+PROJECT_ROOT="$( cd "$SCRIPT_DIR/../.." && pwd )"
 
 # Check if Python 3 is available
 if ! command -v python3 &> /dev/null; then
@@ -16,13 +21,13 @@ fi
 echo "✅ Python 3 found"
 echo ""
 
-# Check if device_config.json exists (created by find_monitor_device.py)
-if [ ! -f "device_config.json" ]; then
-    echo "⚠️  device_config.json not found!"
+# Check if config exists
+CONFIG_PATH="$PROJECT_ROOT/config/device_config.json"
+if [ ! -f "$CONFIG_PATH" ]; then
+    echo "⚠️  device_config.json not found at $CONFIG_PATH"
     echo ""
     echo "📋 First-time setup required:"
-    echo "   1. Run: ./simple_setup.sh"
-    echo "      (Sets monitor as default input)"
+    echo "   1. Run: cd $PROJECT_ROOT/scripts/setup"
     echo "   2. Run: python3 find_monitor_device.py"
     echo "      (Finds capture device)"
     echo "   3. Run: python3 test_audio.py"
@@ -44,7 +49,8 @@ if [[ "$OSTYPE" == "linux-gnu"* ]]; then
             echo "   Current: $DEFAULT_SOURCE"
             echo ""
             echo "🔧 Quick fix:"
-            echo "   ./simple_setup.sh"
+            echo "   cd $PROJECT_ROOT/scripts/setup"
+            echo "   python3 find_monitor_device.py"
             echo ""
             read -p "Continue anyway? (y/n): " -n 1 -r
             echo
@@ -73,7 +79,8 @@ while true; do
     fi
     echo "------------------------------------------------------------"
 
-    # Run server.py
+    # Run server.py from src directory
+    cd "$PROJECT_ROOT/src"
     python3 server.py
     exit_code=$?
 

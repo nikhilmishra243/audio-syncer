@@ -33,7 +33,7 @@ app = Flask(__name__)
 def stream():
     """[stream] Serve streaming client"""
     logger.info("[stream] Serving client.html (streaming interface)")
-    return send_from_directory('.', 'client.html')
+    return send_from_directory('../web', 'client.html')
 
 def get_ip():
     """[get_ip] Get local IP address"""
@@ -131,15 +131,17 @@ def load_audio_config():
     """[load_audio_config] Load audio configuration"""
     try:
         # Try device_config.json first (from find_monitor_device.py)
-        if os.path.exists('device_config.json'):
-            with open('device_config.json', 'r') as f:
+        config_path = os.path.join('..', 'config', 'device_config.json')
+        if os.path.exists(config_path):
+            with open(config_path, 'r') as f:
                 config = json.load(f)
                 logger.info(f"[load_audio_config] Loaded device config: ID={config.get('device_id')}, Name={config.get('device_name')}")
                 return config
 
         # Fallback to audio_config.json (from select_audio_source.py)
-        if os.path.exists('audio_config.json'):
-            with open('audio_config.json', 'r') as f:
+        config_path = os.path.join('..', 'config', 'audio_config.json')
+        if os.path.exists(config_path):
+            with open(config_path, 'r') as f:
                 config = json.load(f)
                 logger.info(f"[load_audio_config] Loaded audio config: {config.get('sounddevice_id', 'N/A')}")
                 return config

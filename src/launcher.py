@@ -60,7 +60,7 @@ def is_server_running():
 def admin_panel():
     """Serve admin control panel"""
     logger.info("[admin_panel] Serving admin.html")
-    return send_from_directory('.', 'admin.html')
+    return send_from_directory('../web', 'admin.html')
 
 @app.route('/api/admin/start', methods=['POST'])
 def start_server():
@@ -77,12 +77,13 @@ def start_server():
         })
 
     try:
-        # Start server.py as subprocess
+        # Start server.py as subprocess - path relative to src/
         server_process = subprocess.Popen(
             [sys.executable, 'server.py'],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            stdin=subprocess.PIPE
+            stdin=subprocess.PIPE,
+            cwd=os.path.dirname(os.path.abspath(__file__))  # Run in src/ directory
         )
 
         logger.info(f"[start_server] Audio server started with PID: {server_process.pid}")
@@ -171,7 +172,7 @@ def admin_status():
 def user_landing():
     """Serve user landing page"""
     logger.info("[user_landing] Serving landing.html")
-    return send_from_directory('.', 'landing.html')
+    return send_from_directory('../web', 'landing.html')
 
 @app.route('/stream')
 def stream_redirect():
